@@ -39,7 +39,7 @@ def main():
     print('initializing neurual network')
     vocab_size = len(selected_companies)
     output_dim = len(selected_investors)
-    _, model = train_model(name='model_1', num_epochs=100, maxlen=maxlen,
+    _, model = train_model(name='model_1', num_epochs=1000, maxlen=maxlen,
     vocab_size=vocab_size, output_dim=output_dim, inputs=padded_inputs, labels=labels)
     print(model.summary())
 
@@ -134,6 +134,7 @@ def create_companies_set(selected_investors, selected_investor_company_dict):
 def create_id_dict(x):
     id_dict = {}
     id_dict_inverse = {}
+    x = sorted(list(x))
     for i, k in enumerate(x):
         id_dict[k] = i
         id_dict_inverse[i] = k
@@ -179,15 +180,17 @@ def train_model(name, num_epochs, maxlen, vocab_size, output_dim, inputs, labels
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['acc'])
 
     model_json = model.to_json()
-    with open('/Users/cicipan/projects/Predict-Success-of-Startups/results/{}.json'.format(name), 'w') as json_file:
+    with open('{}_gpu.json'.format(name), 'w') as json_file:
         json_file.write(model_json)
 
-    # checkpointer = ModelCheckpoint(
-    #     filepath='/Users/cicipan/projects/Predict-Success-of-Startups/results/{}_weights.hdf5'.format(name), 
-    #     monitor='acc',
-    #     verbose=1, save_best_only=True) 
-
-    hist = model.fit(inputs, labels, epochs=num_epochs, verbose=0)
+    checkpointer = ModelCheckpoint(
+        filepath='{}_gpu_weights.hdf5'.format(name), 
+        monitor='acc',
+        verbose=1, save_best_only=True) 
+    callbacks_list = [checkpointer]
+    hist = model.fit(
+        inputs, labels, epochs=num_epochs, verbose=0, callbacks=callbacks_list,
+        batch_size=64)
     
     return hist, model
 
