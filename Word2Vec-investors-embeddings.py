@@ -20,8 +20,7 @@ from keras.callbacks import ModelCheckpoint
 def main():
     print('loading and preparing data')
     file_name = 'investments.csv'
-    num_rows = 168647
-    data = load_data('investments.csv', num_rows) 
+    data = load_data('investments.csv') 
     
     investor_company_dict = create_investor_company_dict(data)
     selected_investors, df = select_investors(investor_company_dict, 5)
@@ -43,29 +42,20 @@ def main():
     vocab_size=vocab_size, output_dim=output_dim, inputs=padded_inputs, labels=labels)
     print(model.summary())
 
+
+
     
-    # print('start training')
-    # experiments = []
-    # for i in range(6):
-    #     hist, model = train_model(num_epochs=10, name="model_{}".format(i), maxlen=maxlen,
-    #         vocab_size=vocab_size, output_dim=output_dim, inputs=padded_inputs, labels=labels)
-    #     experiments.append({'history': hist.history, 
-    #                         'best_loss': min(hist.history['loss']), 
-    #                         'best_acc': max(hist.history['acc'])})
-    #     print(hist.history['acc'])
-
-    #     with open('/Users/cicipan/projects/Predict-Success-of-Startups/results/experiments.json', 'w') as f:
-    #         json.dump(experiments, f)
-
-
-
-
-def load_data(file_name, num_rows):
-    df = pd.read_csv(file_name)
+    
+def load_data(file_name):
+    dt = pd.read_csv(file_name)
 #     if num_rows is None:
 #         num_rows = len(df)    
-    data = df.loc[:num_rows]
-    return data
+#     data = df.loc[:num_rows]
+    dt = pd.read_csv(file_name)
+    dt = dt[['company_name', 'investor_name']]
+    dt = dt.dropna()
+    dt.info()
+    return dt
 
 
 
@@ -132,6 +122,7 @@ def create_companies_set(selected_investors, selected_investor_company_dict):
 
 
 def create_id_dict(x):
+#create a fixed id dictionary
     id_dict = {}
     id_dict_inverse = {}
     x = sorted(list(x))
