@@ -1,5 +1,7 @@
 import random
 import numpy as np
+from numpy import array
+from numpy import argmax
 import pandas as pd
 import time
 import json
@@ -12,9 +14,7 @@ from keras.layers import Flatten
 from keras.layers import Reshape
 from keras.layers import AveragePooling1D
 from keras.layers.embeddings import Embedding
-from numpy import array
-from numpy import argmax
-from keras.utils import to_categorical
+from keras.utils.np_utils import to_categorical
 from keras.callbacks import ModelCheckpoint
 
 
@@ -27,6 +27,7 @@ def main():
     MODEL_NAME = 'model_ps_{}'.format(PORTFOLIO_SIZE)
 
     investor_company_dict, investor_info_dict, _, company_info_dict = create_investor_company_dict(data)
+    print(len(investor_company_dict))
     selected_investors, df = select_investors(investor_company_dict, PORTFOLIO_SIZE)
     print(len(selected_investors))
     selected_investor_company_dict = create_selected_new_dict(selected_investors, investor_company_dict)
@@ -71,7 +72,7 @@ def create_investor_company_dict(dataframe):
     investor_info_dict = {}
     # it should looks like ex: {investor_name: {country_code: US, region: Bay Area}}
 
-    for i, row in dt.iterrows():
+    for i, row in dataframe.iterrows():
         company = row['company_name']
         industry_cat = row['company_category_list']
         comp_cc = row['company_country_code']
@@ -106,9 +107,8 @@ def create_investor_company_dict(dataframe):
                 investor_company_dict[investor].add(company)
 
             all_companies.add(company)
-            all_investors.add(investor)    
-        
-        return investor_company_dict, investor_info_dict, company_investor_dict, company_info_dict
+            all_investors.add(investor)       
+    return investor_company_dict, investor_info_dict, company_investor_dict, company_info_dict
 
 
 def select_investors(investor_company_dict, min_portfolio_size):
@@ -120,12 +120,9 @@ def select_investors(investor_company_dict, min_portfolio_size):
     
     df_portfolio_size = pd.DataFrame(data=investor_portfolio_size, columns=['name', 'number'])
     
-    selected_investors = set([x[0] for x in investor_portfolio_size])
-    
+    selected_investors = set([x[0] for x in investor_portfolio_size])    
     return selected_investors, df_portfolio_size
     
-
-
 
 def create_selected_new_dict(selected_set, old_dict):
     new_dict = {}
@@ -134,7 +131,6 @@ def create_selected_new_dict(selected_set, old_dict):
     return new_dict
         
 
-
 def create_companies_set(selected_investors, selected_investor_company_dict):
     selected_companies = set()
     for i in selected_investors:
@@ -142,7 +138,6 @@ def create_companies_set(selected_investors, selected_investor_company_dict):
         for c in companies:
             selected_companies.add(c)
     return selected_companies
-
 
 
 def create_id_dict(x):
@@ -156,14 +151,12 @@ def create_id_dict(x):
     return id_dict, id_dict_inverse
 
 
-
 def create_one_hot_labels(i_c_new_dict, i_id_dict):
     original = i_c_new_dict.keys()
     integer_encoded_labels = [i_id_dict[x] for x in original]
     d = array(integer_encoded_labels)
     labels = to_categorical(d)
     return labels
-
 
 
 def encode_inputs(i_c_new_dict, c_id_dict):
@@ -178,13 +171,10 @@ def encode_inputs(i_c_new_dict, c_id_dict):
             encoded_c_list.append(c_id_dict[c])
         
         encoded_portfolios.append(encoded_c_list)
-    
     return encoded_portfolios 
 
 
-
 def train_model(name, num_epochs, maxlen, vocab_size, output_dim, inputs, labels):
-
     companies_input = Input(shape=(maxlen,), dtype='int32')
     x = Embedding(vocab_size, 10, input_length=maxlen)(companies_input)
     x = AveragePooling1D(pool_size=(maxlen,))(x)
@@ -207,7 +197,6 @@ def train_model(name, num_epochs, maxlen, vocab_size, output_dim, inputs, labels
     hist = model.fit(
         inputs, labels, epochs=num_epochs, verbose=0, callbacks=callbacks_list,
         batch_size=64)
-    
     return hist, model
 
 
